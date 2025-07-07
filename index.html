@@ -374,28 +374,92 @@
             font-size: 16px;
         }
         
-        .expense-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
+        .form-section {
+            padding: 20px;
         }
         
-        .btn-expense {
-            padding: 4px 8px;
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid #e5e5e7;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            background: #007AFF;
+            color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
         }
         
-        .btn-edit {
-            background: #007AFF;
-            color: white;
+        .btn-secondary {
+            flex: 1;
+            background: #f2f2f7;
+            color: #007AFF;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
         }
         
-        .btn-delete {
-            background: #ff3b30;
-            color: white;
+        .btn-primary:disabled {
+            background: #d1d1d6;
+            color: #6e6e73;
+            cursor: not-allowed;
+        }
+        
+        .list-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f2f2f7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .list-item-content {
+            flex: 1;
+        }
+        
+        .list-item-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .list-item-subtitle {
+            font-size: 12px;
+            color: #6e6e73;
+        }
+        
+        .combined-badge {
+            font-size: 10px;
+            color: #007AFF;
+            margin-top: 2px;
         }
     </style>
 </head>
@@ -853,20 +917,358 @@
         }
 
         function showUsers() {
-            alert('User management coming soon!');
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <span class="modal-title">Users</span>
+                            <button class="btn-close" onclick="closeModal()">Done</button>
+                        </div>
+                        <div>
+                            ${users.map(user => `
+                                <div class="list-item" onclick="editUser('${user.id}')">
+                                    <div class="list-item-content">
+                                        <div class="list-item-title">
+                                            ${user.name}
+                                            ${user.name === currentUser ? '<span style="color: #007AFF; font-size: 12px; margin-left: 8px;">(Current)</span>' : ''}
+                                        </div>
+                                        <div class="list-item-subtitle">
+                                            ${expenses.filter(e => e.user === user.name).length} expenses
+                                        </div>
+                                    </div>
+                                    <div style="color: #007AFF; font-size: 14px;">Edit →</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="form-buttons">
+                            <button class="btn-primary" onclick="addUser()">Add User</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        function addUser() {
+            const name = prompt('Enter user name:');
+            if (name && name.trim()) {
+                const newUser = {
+                    id: Date.now().toString(),
+                    name: name.trim()
+                };
+                users.push(newUser);
+                localStorage.setItem('voicespend-users', JSON.stringify(users));
+                showUsers();
+            }
+        }
+
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <span class="modal-title">Edit User</span>
+                            <button class="btn-close" onclick="closeModal()">Cancel</button>
+                        </div>
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-input" id="edit-user-name" value="${user.name}" placeholder="User name">
+                            </div>
+                            ${user.name !== currentUser ? `
+                                <div class="form-group">
+                                    <button class="btn-secondary" onclick="setCurrentUser('${user.name}')" style="width: 100%;">
+                                        Set as Current User
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="form-buttons">
+                            <button class="btn-secondary" onclick="showUsers()">Cancel</button>
+                            <button class="btn-primary" onclick="saveUser('${user.id}')">Save</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        function saveUser(userId) {
+            const name = document.getElementById('edit-user-name').value.trim();
+            if (!name) return;
+            
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                const oldName = user.name;
+                user.name = name;
+                
+                // Update expenses with the new name
+                expenses.forEach(expense => {
+                    if (expense.user === oldName) {
+                        expense.user = name;
+                    }
+                });
+                
+                // Update current user if needed
+                if (currentUser === oldName) {
+                    currentUser = name;
+                    localStorage.setItem('voicespend-current-user', currentUser);
+                }
+                
+                localStorage.setItem('voicespend-users', JSON.stringify(users));
+                localStorage.setItem('voicespend-expenses', JSON.stringify(expenses));
+                updateDisplay();
+                showUsers();
+            }
+        }
+
+        function setCurrentUser(userName) {
+            currentUser = userName;
+            localStorage.setItem('voicespend-current-user', currentUser);
+            document.querySelectorAll('.user-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === userName);
+            });
+            updateDisplay();
+            closeModal();
         }
 
         function showHistory() {
-            alert('History view coming soon!');
+            const availableMonths = getAvailableMonths();
+            
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <span class="modal-title">Expense History</span>
+                            <button class="btn-close" onclick="closeModal()">Done</button>
+                        </div>
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 16px; font-size: 14px; color: #6e6e73;">
+                                Select a month to view detailed expenses:
+                            </div>
+                            ${availableMonths.length === 0 ? 
+                                '<div class="no-expenses">No expense history available</div>' :
+                                availableMonths.map(({ year, month }) => {
+                                    const monthExpenses = getMonthlyExpenses(month, year);
+                                    const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+                                    const isCurrentMonth = month === new Date().getMonth() && year === new Date().getFullYear();
+                                    
+                                    return `
+                                        <div class="list-item" onclick="showMonthDetail(${month}, ${year})">
+                                            <div class="list-item-content">
+                                                <div class="list-item-title">
+                                                    ${formatMonthYear(month, year)}
+                                                    ${isCurrentMonth ? '<span style="color: #007AFF; font-size: 12px; margin-left: 8px;">(Current)</span>' : ''}
+                                                </div>
+                                                <div class="list-item-subtitle">
+                                                    ${monthExpenses.length} expenses • ${monthTotal.toFixed(2)} total
+                                                </div>
+                                            </div>
+                                            <div style="color: #007AFF; font-size: 14px;">View →</div>
+                                        </div>
+                                    `;
+                                }).join('')
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        function getAvailableMonths() {
+            const months = new Set();
+            expenses.forEach(expense => {
+                const date = new Date(expense.date);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                months.add(monthKey);
+            });
+            
+            return Array.from(months)
+                .map(monthKey => {
+                    const [year, month] = monthKey.split('-').map(Number);
+                    return { year, month };
+                })
+                .sort((a, b) => {
+                    if (a.year !== b.year) return b.year - a.year;
+                    return b.month - a.month;
+                });
+        }
+
+        function getMonthlyExpenses(month, year) {
+            return expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                const matchesMonth = expenseDate.getMonth() === month && 
+                                   expenseDate.getFullYear() === year;
+                const matchesUser = viewMode === 'combined' || expense.user === currentUser;
+                
+                return matchesMonth && matchesUser;
+            });
+        }
+
+        function formatMonthYear(month, year) {
+            const date = new Date(year, month);
+            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+
+        function showMonthDetail(month, year) {
+            const monthExpenses = getMonthlyExpenses(month, year);
+            const isCurrentMonth = month === new Date().getMonth() && year === new Date().getFullYear();
+            
+            // Group expenses by category
+            const expensesByCategory = {};
+            ['coffee', 'groceries', 'dining', 'gas'].forEach(category => {
+                expensesByCategory[category] = monthExpenses.filter(e => e.category === category);
+            });
+            
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <div>
+                                <div class="modal-title">${formatMonthYear(month, year)}</div>
+                                <div style="font-size: 12px; color: #6e6e73; margin-top: 4px;">
+                                    ${isCurrentMonth ? 'Current Month' : 'Historical Data'} • ${viewMode === 'combined' ? 'Combined View' : currentUser}
+                                </div>
+                            </div>
+                            <button class="btn-close" onclick="showHistory()">Back</button>
+                        </div>
+                        
+                        <div style="padding: 16px 20px; border-bottom: 1px solid #f2f2f7;">
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">
+                                Total: ${monthExpenses.reduce((sum, expense) => sum + expense.amount, 0).toFixed(2)}
+                            </div>
+                            <div style="font-size: 14px; color: #6e6e73;">
+                                ${monthExpenses.length} expenses
+                            </div>
+                        </div>
+                        
+                        <div class="expense-list">
+                            ${Object.entries(expensesByCategory).map(([category, categoryExpenses]) => {
+                                if (categoryExpenses.length === 0) return '';
+                                const categoryTotal = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+                                const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+                                
+                                return `
+                                    <div>
+                                        <div style="padding: 12px 20px; background: #f9f9f9; border-bottom: 1px solid #f2f2f7; display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="font-weight: 600;">${categoryName}</span>
+                                            <span style="font-weight: 600;">${categoryTotal.toFixed(2)}</span>
+                                        </div>
+                                        ${categoryExpenses
+                                            .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                            .map(expense => `
+                                                <div class="expense-item">
+                                                    <div class="expense-header">
+                                                        <span class="expense-amount">${expense.amount.toFixed(2)}</span>
+                                                        <span class="expense-user">${expense.user}</span>
+                                                    </div>
+                                                    <div class="expense-date">
+                                                        ${formatDate(new Date(expense.date))}
+                                                    </div>
+                                                    ${expense.transcription ? `
+                                                        <div class="expense-transcription">
+                                                            "${expense.transcription}"
+                                                        </div>
+                                                    ` : ''}
+                                                </div>
+                                            `).join('')}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = modal;
         }
 
         function showCategories() {
-            alert('Category management coming soon!');
+            const categoriesData = [
+                { name: 'Coffee', budget: budgets.coffee, id: 'coffee' },
+                { name: 'Groceries', budget: budgets.groceries, id: 'groceries' },
+                { name: 'Dining Out', budget: budgets.dining, id: 'dining' },
+                { name: 'Gas', budget: budgets.gas, id: 'gas' }
+            ];
+            
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <span class="modal-title">Categories</span>
+                            <button class="btn-close" onclick="closeModal()">Done</button>
+                        </div>
+                        <div>
+                            ${categoriesData.map(category => `
+                                <div class="list-item" onclick="editCategory('${category.id}')">
+                                    <div class="list-item-content">
+                                        <div class="list-item-title">${category.name}</div>
+                                        <div class="list-item-subtitle">Budget: ${category.budget.toFixed(0)}</div>
+                                    </div>
+                                    <div style="color: #007AFF; font-size: 14px;">Edit →</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        function editCategory(categoryId) {
+            const categoryNames = {
+                'coffee': 'Coffee',
+                'groceries': 'Groceries', 
+                'dining': 'Dining Out',
+                'gas': 'Gas'
+            };
+            
+            const categoryName = categoryNames[categoryId];
+            const currentBudget = budgets[categoryId];
+            
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <span class="modal-title">Edit ${categoryName}</span>
+                            <button class="btn-close" onclick="closeModal()">Cancel</button>
+                        </div>
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label class="form-label">Monthly Budget</label>
+                                <input type="number" step="0.01" class="form-input" id="edit-budget" value="${currentBudget}" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="form-buttons">
+                            <button class="btn-secondary" onclick="showCategories()">Cancel</button>
+                            <button class="btn-primary" onclick="saveCategoryBudget('${categoryId}')">Save</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        function saveCategoryBudget(categoryId) {
+            const newBudget = parseFloat(document.getElementById('edit-budget').value);
+            if (isNaN(newBudget) || newBudget <= 0) {
+                alert('Please enter a valid budget amount');
+                return;
+            }
+            
+            budgets[categoryId] = newBudget;
+            localStorage.setItem('voicespend-budgets', JSON.stringify(budgets));
+            updateDisplay();
+            showCategories();
         }
 
         // Load saved user preferences
         const savedUser = localStorage.getItem('voicespend-current-user');
         const savedViewMode = localStorage.getItem('voicespend-view-mode');
+        const savedBudgets = localStorage.getItem('voicespend-budgets');
         
         if (savedUser) {
             currentUser = savedUser;
@@ -878,6 +1280,10 @@
         if (savedViewMode) {
             viewMode = savedViewMode;
             document.querySelector('select').value = savedViewMode;
+        }
+        
+        if (savedBudgets) {
+            Object.assign(budgets, JSON.parse(savedBudgets));
         }
 
         // Initialize display
