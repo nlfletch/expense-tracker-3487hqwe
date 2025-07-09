@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoiceSpend - Expense Tracker</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlZvaWNlU3BlbmQgLSBFeHBlbnNlIFRyYWNrZXIiLAogICJzaG9ydF9uYW1lIjogIlZvaWNlU3BlbmQiLAogICJkZXNjcmlwdGlvbiI6ICJRdWlja2x5IHRyYWNrIGV4cGVuc2VzIHdpdGggeW91ciB2b2ljZSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y1ZjVmNyIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDdBRkYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSTFNVElpSUdobGFXZG9kRDBpTlRFeUlqNGdQSEpsWTNRZ2VEMGlNQ0lnZVQwaU1DSWdkMmxrZEdnOUlqVXhNaUlnYUdWcFoyaDBQU0kxTVRJaUlHWnBiR3c5SWlNd01EZEJSa1lpTHo0Z1BIUmxlSFFnZUQwaU1qVTJJaUI1UFNJNU5TSWdabWxzYkQwaWQyaHBkR1VpSUdadmJuUXRjMmw2WlQwaU16QmlhU0krOFFENWlqZ2xJM2dnSWlCMGJtRnRaU0U5SWtaUFRrUWlMejRnUEM5emRtYysiLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VoiceSpend">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIj4gPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMwMDdBRkYiLz4gPHRleHQgeD0iMjU2IiB5PSI5NSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMzBweCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPvCfpL88L3RleHQ+IDx0ZXh0IHg9IjI1NiIgeT0iMzAwIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSI0MHB4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+Vm9pY2VTcGVuZDwvdGV4dD4gPC9zdmc+">
     <style>
         * {
             margin: 0;
@@ -606,17 +613,27 @@
             'gas': 150
         };
 
-        // Initialize speech recognition with better mobile support
+        // Initialize speech recognition with aggressive mobile support
         function initializeSpeechRecognition() {
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
+                
+                // Optimized settings for mobile
                 recognition.continuous = false;
                 recognition.interimResults = false;
                 recognition.lang = 'en-US';
+                recognition.maxAlternatives = 1;
+                
+                // Mobile-specific optimizations
+                if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+                    // iOS-specific settings
+                    recognition.grammars = null; // Remove grammar constraints for iOS
+                }
                 
                 recognition.onstart = function() {
                     console.log('Speech recognition started');
+                    document.getElementById('voice-status').textContent = 'Listening... speak now!';
                 };
                 
                 recognition.onresult = function(event) {
@@ -634,13 +651,22 @@
                     console.error('Speech recognition error:', event.error);
                     stopListening();
                     
-                    let errorMessage = 'Speech recognition failed. ';
-                    if (event.error === 'not-allowed') {
-                        errorMessage += 'Please allow microphone access.';
-                    } else if (event.error === 'no-speech') {
-                        errorMessage += 'No speech detected. Try again.';
-                    } else {
-                        errorMessage += 'Please try the manual entry instead.';
+                    let errorMessage = '';
+                    switch(event.error) {
+                        case 'not-allowed':
+                            errorMessage = '🎤 Microphone access denied. Please:\n1. Tap the address bar\n2. Allow microphone access\n3. Try again';
+                            break;
+                        case 'no-speech':
+                            errorMessage = '🔇 No speech detected. Speak louder and closer to your phone.';
+                            break;
+                        case 'network':
+                            errorMessage = '📶 Network error. Check your internet connection.';
+                            break;
+                        case 'audio-capture':
+                            errorMessage = '🎤 Microphone not available. Close other apps using the microphone.';
+                            break;
+                        default:
+                            errorMessage = `🚫 Speech recognition failed (${event.error}). Try manual entry or restart the app.`;
                     }
                     alert(errorMessage);
                 };
@@ -652,13 +678,13 @@
                 
                 return true;
             } else {
-                // Disable voice button if not supported
+                // Show a more helpful message for unsupported browsers
                 const voiceBtn = document.getElementById('voice-btn');
                 voiceBtn.classList.add('disabled');
                 voiceBtn.onclick = function() {
-                    alert('Voice recognition is not supported on this device. Please use manual entry.');
+                    alert('🚫 Voice recognition not supported.\n\nTry:\n• Using Chrome browser\n• Installing this as an app (tap share → Add to Home Screen)\n• Using manual entry with the ✏️ button');
                 };
-                document.getElementById('voice-status').textContent = 'Voice not supported - use ✏️ to type';
+                document.getElementById('voice-status').textContent = 'Voice not supported - tap ✏️ to type';
                 return false;
             }
         }
@@ -740,10 +766,27 @@
         function startListening() {
             if (!recognition) return;
             
+            // Request microphone permission explicitly on mobile
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(() => {
+                        console.log('Microphone permission granted');
+                        beginListening();
+                    })
+                    .catch(error => {
+                        console.error('Microphone permission denied:', error);
+                        alert('🎤 Please allow microphone access:\n1. Tap the address bar\n2. Allow microphone\n3. Try again');
+                    });
+            } else {
+                beginListening();
+            }
+        }
+        
+        function beginListening() {
             isListening = true;
             document.getElementById('voice-btn').classList.add('listening');
             document.getElementById('voice-btn').textContent = '⏹️';
-            document.getElementById('voice-status').textContent = 'Listening... Say "coffee 6"';
+            document.getElementById('voice-status').textContent = 'Starting microphone...';
             document.getElementById('recognized-text').style.display = 'none';
             
             try {
@@ -751,7 +794,7 @@
             } catch (error) {
                 console.error('Failed to start recognition:', error);
                 stopListening();
-                alert('Voice recognition failed to start. Please try manual entry.');
+                alert('🚫 Voice recognition failed to start.\n\nTry:\n• Refreshing the page\n• Using Chrome browser\n• Installing as an app (Share → Add to Home Screen)');
             }
         }
 
@@ -1344,6 +1387,38 @@
         // Initialize everything
         const speechSupported = initializeSpeechRecognition();
         updateDisplay();
+        
+        // PWA Installation prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install banner after 3 seconds
+            setTimeout(() => {
+                if (confirm('📱 Install VoiceSpend as an app for better voice recognition?\n\nThis will add it to your home screen and improve microphone access.')) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('User accepted the A2HS prompt');
+                        }
+                        deferredPrompt = null;
+                    });
+                }
+            }, 3000);
+        });
+        
+        // Show manual install instructions for iOS
+        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+            setTimeout(() => {
+                if (!window.navigator.standalone) {
+                    const shouldInstall = confirm('📱 For better voice recognition on iOS:\n\n1. Tap the Share button below\n2. Select "Add to Home Screen"\n3. Open from your home screen\n\nThis improves microphone access significantly!\n\nShow instructions now?');
+                    if (shouldInstall) {
+                        alert('📱 iOS Installation Steps:\n\n1. Tap the Share button (□↗) at the bottom\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" in the top right\n4. Open VoiceSpend from your home screen\n\nThis will give much better voice recognition!');
+                    }
+                }
+            }, 2000);
+        }
         
         console.log('App initialized. Speech recognition supported:', speechSupported);
     </script>
