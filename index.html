@@ -211,6 +211,11 @@
             animation: pulse 1s infinite;
         }
         
+        .voice-button.disabled {
+            background: #d1d1d6;
+            cursor: not-allowed;
+        }
+        
         .manual-button {
             background: #34c759;
             color: white;
@@ -461,6 +466,21 @@
             color: #007AFF;
             margin-top: 2px;
         }
+        
+        .btn-expense {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+        
+        .btn-delete {
+            background: #ff3b30;
+        }
     </style>
 </head>
 <body>
@@ -568,7 +588,6 @@
         </div>
     </div>
 
-    <!-- Modals will be inserted here -->
     <div id="modal-container"></div>
 
     <script>
@@ -587,33 +606,61 @@
             'gas': 150
         };
 
-        // Initialize speech recognition
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-            
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById('recognized-text').textContent = '"' + transcript + '"';
-                document.getElementById('recognized-text').style.display = 'block';
+        // Initialize speech recognition with better mobile support
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
                 
-                setTimeout(() => {
-                    processVoiceInput(transcript);
-                }, 1000);
-            };
-            
-            recognition.onerror = function(event) {
-                console.error('Speech recognition error:', event.error);
-                stopListening();
-                alert('Speech recognition failed. Please try again.');
-            };
-            
-            recognition.onend = function() {
-                stopListening();
-            };
+                recognition.onstart = function() {
+                    console.log('Speech recognition started');
+                };
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    console.log('Transcript:', transcript);
+                    document.getElementById('recognized-text').textContent = '"' + transcript + '"';
+                    document.getElementById('recognized-text').style.display = 'block';
+                    
+                    setTimeout(() => {
+                        processVoiceInput(transcript);
+                    }, 1000);
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    stopListening();
+                    
+                    let errorMessage = 'Speech recognition failed. ';
+                    if (event.error === 'not-allowed') {
+                        errorMessage += 'Please allow microphone access.';
+                    } else if (event.error === 'no-speech') {
+                        errorMessage += 'No speech detected. Try again.';
+                    } else {
+                        errorMessage += 'Please try the manual entry instead.';
+                    }
+                    alert(errorMessage);
+                };
+                
+                recognition.onend = function() {
+                    console.log('Speech recognition ended');
+                    stopListening();
+                };
+                
+                return true;
+            } else {
+                // Disable voice button if not supported
+                const voiceBtn = document.getElementById('voice-btn');
+                voiceBtn.classList.add('disabled');
+                voiceBtn.onclick = function() {
+                    alert('Voice recognition is not supported on this device. Please use manual entry.');
+                };
+                document.getElementById('voice-status').textContent = 'Voice not supported - use ✏️ to type';
+                return false;
+            }
         }
 
         function setUser(user) {
@@ -663,6 +710,7 @@
         function hideManualEntry() {
             document.getElementById('manual-entry').style.display = 'none';
             document.getElementById('manual-input').value = '';
+            document.getElementById('manual-submit').disabled = true;
             document.getElementById('voice-status').textContent = 'Tap 🎤 for voice or ✏️ to type';
         }
 
@@ -681,7 +729,7 @@
                 const result = parseExpense(text);
                 if (result) {
                     addExpense(result.category, result.amount, text);
-                    alert(`✅ Added ${result.amount} to ${result.category}`);
+                    alert(`✅ Added $${result.amount} to ${result.category}`);
                     hideManualEntry();
                 } else {
                     alert(`❌ Could not parse "${text}"\nTry: "coffee 6" or "groceries 25"`);
@@ -690,6 +738,8 @@
         }
 
         function startListening() {
+            if (!recognition) return;
+            
             isListening = true;
             document.getElementById('voice-btn').classList.add('listening');
             document.getElementById('voice-btn').textContent = '⏹️';
@@ -701,6 +751,7 @@
             } catch (error) {
                 console.error('Failed to start recognition:', error);
                 stopListening();
+                alert('Voice recognition failed to start. Please try manual entry.');
             }
         }
 
@@ -711,7 +762,11 @@
             document.getElementById('voice-status').textContent = 'Tap 🎤 for voice or ✏️ to type';
             
             if (recognition) {
-                recognition.stop();
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    console.error('Error stopping recognition:', error);
+                }
             }
         }
 
@@ -720,7 +775,7 @@
             
             if (result) {
                 addExpense(result.category, result.amount, text);
-                alert(`✅ Added ${result.amount} to ${result.category}`);
+                alert(`✅ Added $${result.amount} to ${result.category}`);
             } else {
                 alert(`❌ Could not parse "${text}"\nTry: "coffee 6" or "groceries 25"`);
             }
@@ -738,7 +793,7 @@
             else if (lowercaseText.includes('dining') || lowercaseText.includes('restaurant') || lowercaseText.includes('food')) category = 'dining';
             else if (lowercaseText.includes('gas') || lowercaseText.includes('fuel')) category = 'gas';
             
-            // Extract amount
+            // Extract amount - improved regex to handle various formats
             const numberMatch = text.match(/(\d+\.?\d*)/);
             const amount = numberMatch ? parseFloat(numberMatch[1]) : null;
             
@@ -782,11 +837,11 @@
                 const remainingElement = document.querySelector(`#${category}-left`).parentElement;
                 if (isOverBudget) {
                     document.getElementById(category + '-left').textContent = Math.ceil(spent - budget);
-                    remainingElement.textContent = `${Math.ceil(spent - budget)} over`;
+                    remainingElement.textContent = `$${Math.ceil(spent - budget)} over`;
                     remainingElement.className = 'remaining-amount over';
                 } else {
                     document.getElementById(category + '-left').textContent = Math.ceil(remaining);
-                    remainingElement.textContent = `${Math.ceil(remaining)} left`;
+                    remainingElement.textContent = `$${Math.ceil(remaining)} left`;
                     remainingElement.className = progress > 0.8 ? 'remaining-amount warning' : 'remaining-amount good';
                 }
                 
@@ -1286,107 +1341,11 @@
             Object.assign(budgets, JSON.parse(savedBudgets));
         }
 
-        // Initialize display
+        // Initialize everything
+        const speechSupported = initializeSpeechRecognition();
         updateDisplay();
-    </script>result.amount} to ${result.category}`);
-            } else {
-                alert(`❌ Could not parse "${text}"\nTry: "coffee 6" or "groceries 25"`);
-            }
-            
-            document.getElementById('recognized-text').style.display = 'none';
-        }
-
-        function parseExpense(text) {
-            const lowercaseText = text.toLowerCase().trim();
-            
-            // Find category
-            let category = null;
-            if (lowercaseText.includes('coffee')) category = 'coffee';
-            else if (lowercaseText.includes('groceries') || lowercaseText.includes('grocery')) category = 'groceries';
-            else if (lowercaseText.includes('dining') || lowercaseText.includes('restaurant') || lowercaseText.includes('food')) category = 'dining';
-            else if (lowercaseText.includes('gas') || lowercaseText.includes('fuel')) category = 'gas';
-            
-            // Extract amount
-            const numberMatch = text.match(/(\d+\.?\d*)/);
-            const amount = numberMatch ? parseFloat(numberMatch[1]) : null;
-            
-            if (category && amount && amount > 0) {
-                return { category, amount };
-            }
-            
-            return null;
-        }
-
-        function addExpense(category, amount, transcription) {
-            const expense = {
-                id: Date.now().toString(),
-                category: category,
-                amount: amount,
-                user: currentUser,
-                date: new Date().toISOString(),
-                transcription: transcription
-            };
-            
-            expenses.push(expense);
-            localStorage.setItem('voicespend-expenses', JSON.stringify(expenses));
-            updateDisplay();
-        }
-
-        function updateDisplay() {
-            const categories = ['coffee', 'groceries', 'dining', 'gas'];
-            
-            categories.forEach(category => {
-                const categoryExpenses = getCurrentMonthExpenses(category);
-                const spent = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-                const budget = budgets[category];
-                const remaining = Math.max(budget - spent, 0);
-                const progress = Math.min(spent / budget, 1);
-                const isOverBudget = spent > budget;
-                
-                // Update spent amount
-                document.getElementById(category + '-spent').textContent = Math.ceil(spent);
-                
-                // Update remaining/over amount
-                const remainingElement = document.querySelector(`#${category}-left`).parentElement;
-                if (isOverBudget) {
-                    document.getElementById(category + '-left').textContent = Math.ceil(spent - budget);
-                    remainingElement.textContent = `$${Math.ceil(spent - budget)} over`;
-                    remainingElement.className = 'remaining-amount over';
-                } else {
-                    document.getElementById(category + '-left').textContent = Math.ceil(remaining);
-                    remainingElement.textContent = `$${Math.ceil(remaining)} left`;
-                    remainingElement.className = progress > 0.8 ? 'remaining-amount warning' : 'remaining-amount good';
-                }
-                
-                // Update percentage
-                document.getElementById(category + '-percent').textContent = Math.round(progress * 100) + '%';
-                
-                // Update progress bar
-                const progressBar = document.getElementById(category + '-progress');
-                progressBar.style.width = Math.min(progress * 100, 100) + '%';
-                progressBar.className = `progress-fill ${isOverBudget ? 'over' : progress > 0.8 ? 'warning' : 'good'}`;
-            });
-        }
-
-        function getCurrentMonthExpenses(category) {
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            
-            return expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate.getMonth() === currentMonth && 
-                       expenseDate.getFullYear() === currentYear &&
-                       expense.category === category;
-            });
-        }
-
-        function showCategory(categoryName) {
-            alert(`Showing ${categoryName} details (feature coming soon)`);
-        }
-
-        // Initialize display
-        updateDisplay();
+        
+        console.log('App initialized. Speech recognition supported:', speechSupported);
     </script>
 </body>
 </html>
