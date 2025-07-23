@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Expense Tracker</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#007AFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Expenses">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    
     <style>
         * {
             margin: 0;
@@ -296,6 +311,23 @@
             font-weight: 600;
         }
         
+        .install-prompt {
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .install-prompt:hover {
+            background: #0056CC;
+        }
+        
         .close-btn {
             background: none;
             border: none;
@@ -420,6 +452,10 @@
             </div>
             
             <div class="settings-content">
+                <button id="install-button" class="install-prompt" style="display: none;" onclick="installApp()">
+                    📱 Install App
+                </button>
+                
                 <div class="settings-section">
                     <h3 class="section-title">Categories</h3>
                     <div id="categories-list">
@@ -456,6 +492,40 @@
     </div>
 
     <script>
+        // PWA Installation
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-button').style.display = 'block';
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('install-button').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
         // App State
         let currentUser = 'Me';
         let currentCategory = null;
