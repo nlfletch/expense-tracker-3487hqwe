@@ -536,7 +536,6 @@
                 .filter(expense => {
                     const expenseDate = new Date(expense.date);
                     return expense.category === categoryId &&
-                           expense.user === currentUser &&
                            expenseDate.getMonth() === currentMonth &&
                            expenseDate.getFullYear() === currentYear;
                 })
