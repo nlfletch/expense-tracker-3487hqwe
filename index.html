@@ -838,9 +838,9 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // firebase.initializeApp(firebaseConfig);
+        // const auth = firebase.auth();
+        // const db = firebase.firestore();
         
         // Auth state
         let currentUser = null;
@@ -898,17 +898,17 @@
         let expenses = [];
 
         // Firebase Auth State Listener
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('user-email').textContent = user.email;
-                initializeHousehold();
-                hideAuthModal();
-            } else {
-                currentUser = null;
-                showAuthModal();
-            }
-        });
+        // auth.onAuthStateChanged((user) => {
+        //    if (user) {
+        //        currentUser = user;
+        //        document.getElementById('user-email').textContent = user.email;
+        //        initializeHousehold();
+        //        hideAuthModal();
+        //    } else {
+        //        currentUser = null;
+        //        showAuthModal();
+        //    }
+        // });
 
         function showAuthModal() {
             document.getElementById('auth-modal').style.display = 'flex';
