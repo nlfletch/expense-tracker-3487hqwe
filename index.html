@@ -439,6 +439,10 @@
                 <div class="settings-section">
                     <h3 class="section-title">Data</h3>
                     <div class="settings-item">
+                        <span class="item-label">View History</span>
+                        <button class="btn-primary" onclick="viewHistory()">View</button>
+                    </div>
+                    <div class="settings-item">
                         <span class="item-label">Export Data</span>
                         <button class="btn-primary" onclick="exportData()">Export</button>
                     </div>
@@ -469,6 +473,7 @@
 
         // Initialize app
         function init() {
+            checkMonthRollover();
             updateMonthInfo();
             renderCategories();
             renderSettings();
@@ -477,6 +482,47 @@
             const savedUser = localStorage.getItem('expense-current-user');
             if (savedUser && users.includes(savedUser)) {
                 setUser(savedUser);
+            }
+        }
+
+        function checkMonthRollover() {
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${now.getMonth()}`;
+            const lastMonth = localStorage.getItem('expense-last-month');
+            
+            if (lastMonth && lastMonth !== currentMonth) {
+                // Month has changed - archive old expenses and reset
+                archiveLastMonth();
+            }
+            
+            localStorage.setItem('expense-last-month', currentMonth);
+        }
+
+        function archiveLastMonth() {
+            // Move current expenses to archive
+            const archived = JSON.parse(localStorage.getItem('expense-archive') || '[]');
+            const currentMonthExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                const now = new Date();
+                return expenseDate.getMonth() !== now.getMonth() || 
+                       expenseDate.getFullYear() !== now.getFullYear();
+            });
+            
+            if (currentMonthExpenses.length > 0) {
+                archived.push(...currentMonthExpenses);
+                localStorage.setItem('expense-archive', JSON.stringify(archived));
+                
+                // Keep only current month expenses
+                expenses = expenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    const now = new Date();
+                    return expenseDate.getMonth() === now.getMonth() && 
+                           expenseDate.getFullYear() === now.getFullYear();
+                });
+                
+                localStorage.setItem('expense-data', JSON.stringify(expenses));
+                
+                console.log(`Archived ${currentMonthExpenses.length} expenses from last month`);
             }
         }
 
@@ -738,10 +784,12 @@
         }
 
         function exportData() {
+            const archived = JSON.parse(localStorage.getItem('expense-archive') || '[]');
             const data = {
                 users,
                 categories,
-                expenses,
+                currentMonthExpenses: expenses,
+                archivedExpenses: archived,
                 exportDate: new Date().toISOString()
             };
             
@@ -752,6 +800,45 @@
             a.download = `expenses-export-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        function viewHistory() {
+            const archived = JSON.parse(localStorage.getItem('expense-archive') || '[]');
+            if (archived.length === 0) {
+                alert('No historical data available yet.');
+                return;
+            }
+            
+            // Group by month
+            const monthlyTotals = {};
+            archived.forEach(expense => {
+                const date = new Date(expense.date);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                const monthName = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+                
+                if (!monthlyTotals[monthKey]) {
+                    monthlyTotals[monthKey] = { name: monthName, total: 0, categories: {} };
+                }
+                
+                monthlyTotals[monthKey].total += expense.amount;
+                
+                if (!monthlyTotals[monthKey].categories[expense.category]) {
+                    monthlyTotals[monthKey].categories[expense.category] = 0;
+                }
+                monthlyTotals[monthKey].categories[expense.category] += expense.amount;
+            });
+            
+            let historyText = 'Expense History:\n\n';
+            Object.values(monthlyTotals).forEach(month => {
+                historyText += `${month.name}: ${month.total.toFixed(2)}\n`;
+                Object.entries(month.categories).forEach(([cat, amount]) => {
+                    const categoryName = categories.find(c => c.id === cat)?.name || cat;
+                    historyText += `  ${categoryName}: ${amount.toFixed(2)}\n`;
+                });
+                historyText += '\n';
+            });
+            
+            alert(historyText);
         }
 
         function clearAllData() {
