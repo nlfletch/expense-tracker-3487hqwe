@@ -14,6 +14,11 @@
     <!-- Manifest -->
     <link rel="manifest" href="manifest.json">
     
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <!-- Favicon and App Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
@@ -534,6 +539,112 @@
             background: #007AFF;
             color: white;
         }
+        
+        /* Auth Modal */
+        .auth-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px;
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+        
+        .auth-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .auth-subtitle {
+            font-size: 16px;
+            color: #6e6e73;
+            margin-bottom: 30px;
+        }
+        
+        .auth-form {
+            text-align: left;
+        }
+        
+        .auth-input {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 16px;
+            background: #f8f9fa;
+        }
+        
+        .auth-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            background: white;
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+        
+        .auth-btn.primary {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .auth-btn.secondary {
+            background: #f2f2f7;
+            color: #007AFF;
+        }
+        
+        .auth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #6e6e73;
+        }
+        
+        .auth-link {
+            color: #007AFF;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #6e6e73;
+            margin-top: 4px;
+        }
+        
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34c759;
+        }
+        
+        .sync-dot.offline {
+            background: #ff9500;
+        }
+        
+        .sync-dot.error {
+            background: #ff3b30;
+        }
     </style>
 </head>
 <body>
@@ -551,6 +662,11 @@
             
             <div class="month-info" id="month-info">
                 December 2024
+            </div>
+            
+            <div class="sync-status" id="sync-status">
+                <div class="sync-dot" id="sync-dot"></div>
+                <span id="sync-text">Synced</span>
             </div>
         </div>
 
@@ -600,7 +716,15 @@
                     📱 Install App
                 </button>
                 
-                <div class="settings-section">
+                                    <div class="settings-section">
+                        <h3 class="section-title">Account</h3>
+                        <div class="settings-item">
+                            <span class="item-label" id="user-email">Not signed in</span>
+                            <button class="btn-danger" onclick="signOut()" id="signout-btn">Sign Out</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
                     <h3 class="section-title">This Month's Expenses</h3>
                     <div id="current-expenses-list">
                         <!-- Current expenses will be populated by JavaScript -->
@@ -642,6 +766,31 @@
         </div>
     </div>
 
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal" style="display: none;">
+        <div class="auth-modal">
+            <h2 class="auth-title">Welcome!</h2>
+            <p class="auth-subtitle">Sign in to sync expenses between devices</p>
+            
+            <form class="auth-form" id="auth-form" onsubmit="return false;">
+                <input type="email" class="auth-input" id="auth-email" placeholder="Email" required>
+                <input type="password" class="auth-input" id="auth-password" placeholder="Password" required>
+                
+                <button type="button" class="auth-btn primary" id="auth-submit" onclick="handleAuth()">
+                    Sign In
+                </button>
+                <button type="button" class="auth-btn secondary" onclick="toggleAuthMode()" id="auth-toggle">
+                    Create Account
+                </button>
+            </form>
+            
+            <div class="auth-switch">
+                <span id="auth-switch-text">Don't have an account?</span>
+                <span class="auth-link" onclick="toggleAuthMode()" id="auth-switch-link">Sign up</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Expense Modal -->
     <div id="edit-modal" class="modal" style="display: none;">
         <div class="edit-modal">
@@ -676,6 +825,28 @@
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            // You'll need to replace these with your Firebase project config
+            apiKey: "AIzaSyBrC2s7GkOZtbrrgG-LsGPDJ-csIuMtjpo",
+            authDomain: "household-expenses-163f9.firebaseapp.com",
+            projectId: "household-expenses-163f9",
+            storageBucket: "household-expenses-163f9.firebasestorage.app",
+            messagingSenderId: "557423677070",
+            appId: "1:557423677070:web:f23f5ca5973b7e020043df",
+            measurementId: "G-08CZFD9J06"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // Auth state
+        let currentUser = null;
+        let isSigningIn = false;
+        let householdId = null;
+        
         // PWA Installation
         let deferredPrompt;
         
@@ -711,32 +882,194 @@
         }
 
         // App State
-        let currentUser = 'Me';
+        let currentUserName = 'Me';
         let currentCategory = null;
         let entryAmount = '';
         let editingExpense = null;
         
-        // Default data
-        let users = JSON.parse(localStorage.getItem('expense-users') || '["Me", "Partner"]');
-        let categories = JSON.parse(localStorage.getItem('expense-categories') || `[
+        // Data will now come from Firebase instead of localStorage
+        let users = ['Me', 'Partner'];
+        let categories = [
             {"id": "coffee", "name": "Coffee", "icon": "☕", "budget": 100},
             {"id": "dining", "name": "Dining Out", "icon": "🍽️", "budget": 200},
             {"id": "groceries", "name": "Groceries", "icon": "🛒", "budget": 600},
             {"id": "misc", "name": "Miscellaneous", "icon": "📦", "budget": 150}
-        ]`);
-        let expenses = JSON.parse(localStorage.getItem('expense-data') || '[]');
+        ];
+        let expenses = [];
+
+        // Firebase Auth State Listener
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('user-email').textContent = user.email;
+                initializeHousehold();
+                hideAuthModal();
+            } else {
+                currentUser = null;
+                showAuthModal();
+            }
+        });
+
+        function showAuthModal() {
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
+
+        function hideAuthModal() {
+            document.getElementById('auth-modal').style.display = 'none';
+        }
+
+        let authMode = 'signin'; // 'signin' or 'signup'
+
+        function toggleAuthMode() {
+            authMode = authMode === 'signin' ? 'signup' : 'signin';
+            
+            if (authMode === 'signup') {
+                document.getElementById('auth-submit').textContent = 'Create Account';
+                document.getElementById('auth-toggle').textContent = 'Sign In Instead';
+                document.getElementById('auth-switch-text').textContent = 'Already have an account?';
+                document.getElementById('auth-switch-link').textContent = 'Sign in';
+            } else {
+                document.getElementById('auth-submit').textContent = 'Sign In';
+                document.getElementById('auth-toggle').textContent = 'Create Account';
+                document.getElementById('auth-switch-text').textContent = "Don't have an account?";
+                document.getElementById('auth-switch-link').textContent = 'Sign up';
+            }
+        }
+
+        async function handleAuth() {
+            if (isSigningIn) return;
+            
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            
+            isSigningIn = true;
+            document.getElementById('auth-submit').disabled = true;
+            document.getElementById('auth-submit').textContent = authMode === 'signup' ? 'Creating...' : 'Signing in...';
+            
+            try {
+                if (authMode === 'signup') {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                } else {
+                    await auth.signInWithEmailAndPassword(email, password);
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+            
+            isSigningIn = false;
+            document.getElementById('auth-submit').disabled = false;
+            toggleAuthMode(); // Reset button text
+        }
+
+        async function signOut() {
+            if (confirm('Sign out? This will stop syncing between devices.')) {
+                await auth.signOut();
+                location.reload();
+            }
+        }
+
+        async function initializeHousehold() {
+            try {
+                // Check if user has a household
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                
+                if (userDoc.exists && userDoc.data().householdId) {
+                    householdId = userDoc.data().householdId;
+                } else {
+                    // Create new household
+                    const householdRef = await db.collection('households').add({
+                        createdBy: currentUser.uid,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        users: [currentUser.uid],
+                        categories: categories,
+                        userNames: users
+                    });
+                    
+                    householdId = householdRef.id;
+                    
+                    // Link user to household
+                    await db.collection('users').doc(currentUser.uid).set({
+                        householdId: householdId,
+                        email: currentUser.email
+                    });
+                }
+                
+                // Listen for household data changes
+                listenToHouseholdData();
+                updateSyncStatus('synced');
+                
+            } catch (error) {
+                console.error('Error initializing household:', error);
+                updateSyncStatus('error');
+            }
+        }
+
+        function listenToHouseholdData() {
+            // Listen to household settings
+            db.collection('households').doc(householdId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    categories = data.categories || categories;
+                    users = data.userNames || users;
+                    renderCategories();
+                    renderSettings();
+                }
+            });
+            
+            // Listen to expenses
+            const currentMonth = new Date();
+            const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+            
+            db.collection('expenses')
+                .where('householdId', '==', householdId)
+                .where('date', '>=', monthStart)
+                .onSnapshot((snapshot) => {
+                    expenses = [];
+                    snapshot.forEach((doc) => {
+                        expenses.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderCategories();
+                    renderCurrentExpenses();
+                });
+        }
+
+        function updateSyncStatus(status) {
+            const dot = document.getElementById('sync-dot');
+            const text = document.getElementById('sync-text');
+            
+            dot.className = 'sync-dot';
+            
+            switch (status) {
+                case 'synced':
+                    text.textContent = 'Synced';
+                    break;
+                case 'syncing':
+                    text.textContent = 'Syncing...';
+                    dot.classList.add('offline');
+                    break;
+                case 'offline':
+                    text.textContent = 'Offline';
+                    dot.classList.add('offline');
+                    break;
+                case 'error':
+                    text.textContent = 'Sync Error';
+                    dot.classList.add('error');
+                    break;
+            }
+        }
 
         // Initialize app
         function init() {
-            checkMonthRollover();
             updateMonthInfo();
-            renderCategories();
-            renderSettings();
             
-            // Load saved user
-            const savedUser = localStorage.getItem('expense-current-user');
-            if (savedUser && users.includes(savedUser)) {
-                setUser(savedUser);
+            // Check if user is already signed in
+            if (!currentUser) {
+                showAuthModal();
             }
         }
 
@@ -790,11 +1123,10 @@
         }
 
         function setUser(user) {
-            currentUser = user;
+            currentUserName = user;
             document.querySelectorAll('.user-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.textContent === user);
             });
-            localStorage.setItem('expense-current-user', user);
             renderCategories();
         }
 
@@ -835,7 +1167,7 @@
 
             return expenses
                 .filter(expense => {
-                    const expenseDate = new Date(expense.date);
+                    const expenseDate = expense.date instanceof Date ? expense.date : expense.date.toDate();
                     return expense.category === categoryId &&
                            expenseDate.getMonth() === currentMonth &&
                            expenseDate.getFullYear() === currentYear;
@@ -880,22 +1212,28 @@
             document.getElementById('add-btn').disabled = dollars === 0;
         }
 
-        function addExpense() {
+        async function addExpense() {
             if (entryAmount === '' || parseInt(entryAmount) === 0) return;
 
             const amount = parseInt(entryAmount) / 100;
             const expense = {
-                id: Date.now().toString(),
                 category: currentCategory.id,
                 amount: amount,
-                user: currentUser,
-                date: new Date().toISOString()
+                user: currentUserName,
+                date: new Date(),
+                householdId: householdId
             };
 
-            expenses.push(expense);
-            saveData();
-            cancelEntry();
-            renderCategories();
+            try {
+                updateSyncStatus('syncing');
+                await db.collection('expenses').add(expense);
+                updateSyncStatus('synced');
+                cancelEntry();
+            } catch (error) {
+                console.error('Error adding expense:', error);
+                updateSyncStatus('error');
+                alert('Failed to add expense. Please try again.');
+            }
         }
 
         function cancelEntry() {
@@ -1041,7 +1379,7 @@
             });
             
             // Set date
-            const date = new Date(expense.date);
+            const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
             document.getElementById('edit-date').value = date.toISOString().slice(0, 16);
             
@@ -1182,19 +1520,22 @@
             });
         }
 
+        // Remove localStorage functions - now using Firebase
+        function saveData() {
+            // Data is automatically saved to Firebase
+        }
+
+        function clearAllData() {
+            alert('Data management is now handled through Firebase. Contact support to delete account data.');
+        }
+
         function exportData() {
-            const archived = JSON.parse(localStorage.getItem('expense-archive') || '[]');
-            const data = {
-                users,
-                categories,
-                currentMonthExpenses: expenses,
-                archivedExpenses: archived,
-                exportDate: new Date().toISOString()
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            alert('Export feature will be available soon with Firebase sync.');
+        }
+
+        function viewHistory() {
+            alert('History view will be available soon with Firebase sync.');
+        }a');
             a.href = url;
             a.download = `expenses-export-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
