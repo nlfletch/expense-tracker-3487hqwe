@@ -3,26 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Expense Tracker</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#007AFF">
+    <title>VoiceSpend - Expense Tracker</title>
+    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Expenses">
-    
-    <!-- Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
-    <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
+    <meta name="apple-mobile-web-app-title" content="VoiceSpend">
     <link rel="apple-touch-icon" href="icon-180.png">
+    <meta name="theme-color" content="#007AFF">
     
     <style>
         * {
@@ -35,7 +22,6 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f7;
             color: #1d1d1f;
-            user-select: none;
         }
         
         .app {
@@ -44,69 +30,140 @@
             min-height: 100vh;
             background: white;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 360px;
+        }
+        
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+        
+        .btn-login.google {
+            background: #4285F4;
+        }
+        
+        .btn-login:disabled {
+            background: #d1d1d6;
+            cursor: not-allowed;
+        }
+        
+        .login-divider {
+            text-align: center;
+            color: #6e6e73;
+            margin: 20px 0;
             position: relative;
+        }
+        
+        .login-divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #d1d1d6;
+        }
+        
+        .login-divider::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #d1d1d6;
+        }
+        
+        .login-toggle {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .login-toggle a {
+            color: #007AFF;
+            text-decoration: none;
+        }
+        
+        .header-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .btn-header {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .btn-logout {
+            background: #ff3b30;
         }
         
         .header {
             background: white;
             padding: 16px 20px;
             border-bottom: 1px solid #e5e5e7;
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
         
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
             margin-bottom: 12px;
         }
         
-        .app-title {
-            font-size: 20px;
-            font-weight: 600;
-        }
-        
-        .settings-btn {
-            background: #f2f2f7;
-            border: none;
-            border-radius: 20px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            cursor: pointer;
-        }
-        
-        .user-selector {
-            display: flex;
-            background: #f2f2f7;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-        
-        .user-btn {
-            flex: 1;
-            padding: 8px 16px;
-            background: transparent;
-            border: none;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .user-btn.active {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .month-info {
+        .user-info {
             text-align: center;
             font-size: 14px;
             color: #6e6e73;
+            margin-bottom: 8px;
         }
         
         .categories-grid {
@@ -114,48 +171,61 @@
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             padding: 20px;
+            padding-bottom: 120px;
         }
         
         .category-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
+            background: #f6f6f6;
+            padding: 16px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 2px solid transparent;
+            transition: transform 0.2s;
         }
         
-        .category-card:active {
-            transform: scale(0.98);
-            border-color: #007AFF;
-        }
-        
-        .category-icon {
-            font-size: 48px;
-            text-align: center;
-            margin-bottom: 12px;
+        .category-card:hover {
+            transform: scale(1.02);
         }
         
         .category-name {
             font-size: 16px;
             font-weight: 600;
-            text-align: center;
             margin-bottom: 8px;
         }
         
-        .category-spent {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 700;
-            color: #007AFF;
+        .category-amounts {
+            text-align: right;
+            margin-bottom: 12px;
         }
         
-        .category-budget {
-            text-align: center;
+        .spent-amount {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .remaining-amount {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        
+        .remaining-amount.good {
+            color: #34c759;
+        }
+        
+        .remaining-amount.warning {
+            color: #ff9500;
+        }
+        
+        .remaining-amount.over {
+            color: #ff3b30;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
             font-size: 12px;
             color: #6e6e73;
-            margin-top: 4px;
+            margin-bottom: 8px;
         }
         
         .progress-bar {
@@ -164,20 +234,141 @@
             background: #e5e5e7;
             border-radius: 2px;
             overflow: hidden;
-            margin-top: 8px;
         }
         
         .progress-fill {
             height: 100%;
             transition: width 0.3s ease;
-            border-radius: 2px;
         }
         
-        .progress-fill.good { background: #34c759; }
-        .progress-fill.warning { background: #ff9500; }
-        .progress-fill.over { background: #ff3b30; }
+        .progress-fill.good {
+            background: #34c759;
+        }
         
-        /* Amount Entry Modal */
+        .progress-fill.warning {
+            background: #ff9500;
+        }
+        
+        .progress-fill.over {
+            background: #ff3b30;
+        }
+        
+        .voice-section {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            border-radius: 20px 20px 0 0;
+            max-width: 428px;
+            width: 100%;
+        }
+        
+        .input-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .voice-button, .manual-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .voice-button {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .voice-button.listening {
+            background: #ff3b30;
+            animation: pulse 1s infinite;
+        }
+        
+        .manual-button {
+            background: #34c759;
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .voice-status {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #6e6e73;
+        }
+        
+        .recognized-text {
+            background: #f6f6f6;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .manual-entry-form {
+            background: #f6f6f6;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .manual-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .manual-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-manual {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .btn-manual.primary {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .btn-manual.secondary {
+            background: #f2f2f7;
+            color: #007AFF;
+        }
+        
+        .btn-manual:disabled {
+            background: #d1d1d6;
+            color: #6e6e73;
+            cursor: not-allowed;
+        }
+        
         .modal {
             position: fixed;
             top: 0;
@@ -191,258 +382,94 @@
             z-index: 1000;
         }
         
-        .amount-entry {
+        .modal-content {
             background: white;
-            border-radius: 20px;
-            padding: 30px;
             margin: 20px;
-            width: 100%;
-            max-width: 320px;
-            text-align: center;
-        }
-        
-        .entry-category {
-            font-size: 64px;
-            margin-bottom: 12px;
-        }
-        
-        .entry-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        
-        .amount-display {
-            font-size: 48px;
-            font-weight: 700;
-            color: #007AFF;
-            margin-bottom: 30px;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .keypad {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .key {
-            background: #f2f2f7;
-            border: none;
             border-radius: 12px;
-            height: 60px;
-            font-size: 24px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.1s ease;
-        }
-        
-        .key:active {
-            background: #e5e5ea;
-            transform: scale(0.95);
-        }
-        
-        .key.zero {
-            grid-column: 1 / 3;
-        }
-        
-        .entry-actions {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .entry-btn {
-            flex: 1;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.1s ease;
-        }
-        
-        .entry-btn.cancel {
-            background: #f2f2f7;
-            color: #6e6e73;
-        }
-        
-        .entry-btn.add {
-            background: #007AFF;
-            color: white;
-        }
-        
-        .entry-btn:active {
-            transform: scale(0.98);
-        }
-        
-        .entry-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        /* Settings Modal */
-        .settings-modal {
-            background: white;
-            border-radius: 20px 20px 0 0;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
             max-height: 80vh;
             overflow-y: auto;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
+            width: 100%;
+            max-width: 400px;
         }
         
-        .settings-modal.show {
-            transform: translateY(0);
-        }
-        
-        .settings-header {
-            padding: 20px;
+        .modal-header {
+            padding: 16px 20px;
             border-bottom: 1px solid #e5e5e7;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
-        .settings-title {
-            font-size: 20px;
+        .modal-title {
+            font-size: 18px;
             font-weight: 600;
         }
         
-        .install-prompt {
-            background: #007AFF;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        
-        .install-prompt:hover {
-            background: #0056CC;
-        }
-        
-        .close-btn {
+        .btn-close {
             background: none;
             border: none;
             font-size: 16px;
             color: #007AFF;
             cursor: pointer;
-            padding: 8px;
         }
         
-        .settings-content {
-            padding: 20px;
-        }
-        
-        .settings-section {
-            margin-bottom: 30px;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-        
-        .settings-item {
-            background: #f2f2f7;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .item-label {
-            font-size: 16px;
-        }
-        
-        .item-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #007AFF;
-        }
-        
-        .btn-primary {
-            background: #007AFF;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .btn-danger {
-            background: #ff3b30;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
+        .expense-list {
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         .expense-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid #e9ecef;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f2f2f7;
         }
         
         .expense-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .expense-amount {
-            font-size: 18px;
-            font-weight: 700;
-            color: #007AFF;
-        }
-        
-        .expense-category {
             font-size: 16px;
             font-weight: 600;
-            color: #1d1d1f;
         }
         
-        .expense-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 14px;
+        .expense-user {
+            font-size: 12px;
             color: #6e6e73;
+        }
+        
+        .expense-date {
+            font-size: 12px;
+            color: #6e6e73;
+            margin-bottom: 4px;
+        }
+        
+        .expense-transcription {
+            font-size: 12px;
+            color: #007AFF;
+            font-style: italic;
+        }
+        
+        .no-expenses {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6e6e73;
+            font-size: 16px;
         }
         
         .expense-actions {
             display: flex;
             gap: 8px;
+            align-items: center;
         }
         
-        .btn-small {
-            padding: 6px 12px;
+        .btn-expense {
+            padding: 4px 8px;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 12px;
-            font-weight: 600;
             cursor: pointer;
         }
         
@@ -456,1159 +483,707 @@
             color: white;
         }
         
-        .no-expenses {
-            text-align: center;
-            color: #6e6e73;
-            font-style: italic;
-            padding: 20px;
-        }
-        
-        /* Edit Modal */
-        .edit-modal {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin: 20px;
-            width: 100%;
-            max-width: 320px;
-            text-align: center;
-        }
-        
-        .edit-form {
-            text-align: left;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
+        .error-message {
+            color: #ff3b30;
             font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #1d1d1f;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
-            background: #f8f9fa;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: #007AFF;
-            background: white;
-        }
-        
-        .form-select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
-            background: #f8f9fa;
-        }
-        
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-        
-        .form-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        .form-btn.cancel {
-            background: #f2f2f7;
-            color: #6e6e73;
-        }
-        
-        .form-btn.save {
-            background: #007AFF;
-            color: white;
-        }
-        
-        /* Auth Modal */
-        .auth-modal {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin: 20px;
-            width: 100%;
-            max-width: 320px;
             text-align: center;
-        }
-        
-        .auth-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .auth-subtitle {
-            font-size: 16px;
-            color: #6e6e73;
-            margin-bottom: 30px;
-        }
-        
-        .auth-form {
-            text-align: left;
-        }
-        
-        .auth-input {
-            width: 100%;
-            padding: 16px;
             margin-bottom: 16px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            font-size: 16px;
-            background: #f8f9fa;
         }
         
-        .auth-input:focus {
-            outline: none;
-            border-color: #007AFF;
-            background: white;
-        }
-        
-        .auth-btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 12px;
-        }
-        
-        .auth-btn.primary {
-            background: #007AFF;
-            color: white;
-        }
-        
-        .auth-btn.secondary {
-            background: #f2f2f7;
-            color: #007AFF;
-        }
-        
-        .auth-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .auth-switch {
+        .loading {
             text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
+            padding: 40px 20px;
             color: #6e6e73;
         }
         
-        .auth-link {
-            color: #007AFF;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        
-        .sync-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #6e6e73;
-            margin-top: 4px;
-        }
-        
-        .sync-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #34c759;
-        }
-        
-        .sync-dot.offline {
-            background: #ff9500;
-        }
-        
-        .sync-dot.error {
-            background: #ff3b30;
+        .hide {
+            display: none !important;
         }
     </style>
 </head>
 <body>
-    <div class="app">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+            <h1 class="login-title">VoiceSpend</h1>
+            <div id="error-message" class="error-message hide"></div>
+            
+            <div id="email-login-form">
+                <input type="email" id="email-input" class="login-input" placeholder="Email" />
+                <input type="password" id="password-input" class="login-input" placeholder="Password" />
+                <button id="btn-email-login" class="btn-login" onclick="emailLogin()">Sign In</button>
+                
+                <div class="login-divider">OR</div>
+                
+                <button class="btn-login google" onclick="googleLogin()">
+                    Sign in with Google
+                </button>
+                
+                <div class="login-toggle">
+                    Don't have an account? <a href="#" onclick="toggleSignUp(true)">Sign up</a>
+                </div>
+            </div>
+            
+            <div id="email-signup-form" class="hide">
+                <input type="email" id="signup-email" class="login-input" placeholder="Email" />
+                <input type="password" id="signup-password" class="login-input" placeholder="Password" />
+                <input type="password" id="signup-confirm" class="login-input" placeholder="Confirm Password" />
+                <button id="btn-email-signup" class="btn-login" onclick="emailSignUp()">Create Account</button>
+                
+                <div class="login-toggle">
+                    Already have an account? <a href="#" onclick="toggleSignUp(false)">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app hide">
         <div class="header">
-            <div class="header-top">
-                <h1 class="app-title">Expenses</h1>
-                <button class="settings-btn" onclick="showSettings()">⚙️</button>
+            <div class="header-buttons">
+                <button class="btn-header" onclick="showHistory()">History</button>
+                <button class="btn-header btn-logout" onclick="logout()">Logout</button>
             </div>
             
-            <div class="user-selector">
-                <button class="user-btn active" onclick="setUser('Me')">Me</button>
-                <button class="user-btn" onclick="setUser('Partner')">Partner</button>
-            </div>
+            <h1>Expense Tracker</h1>
             
-            <div class="month-info" id="month-info">
-                December 2024
+            <div id="user-info" class="user-info"></div>
+        </div>
+
+        <div class="categories-grid">
+            <div class="category-card" onclick="showCategory('Coffee')">
+                <div class="category-name">Coffee</div>
+                <div class="category-amounts">
+                    <div class="spent-amount">$<span id="coffee-spent">0</span></div>
+                    <div class="remaining-amount good">$<span id="coffee-left">100</span> left</div>
+                </div>
+                <div class="progress-info">
+                    <span>Budget: $100</span>
+                    <span id="coffee-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill good" id="coffee-progress" style="width: 0%"></div>
+                </div>
             </div>
-            
-            <div class="sync-status" id="sync-status">
-                <div class="sync-dot" id="sync-dot"></div>
-                <span id="sync-text">Synced</span>
+
+            <div class="category-card" onclick="showCategory('Groceries')">
+                <div class="category-name">Groceries</div>
+                <div class="category-amounts">
+                    <div class="spent-amount">$<span id="groceries-spent">0</span></div>
+                    <div class="remaining-amount good">$<span id="groceries-left">600</span> left</div>
+                </div>
+                <div class="progress-info">
+                    <span>Budget: $600</span>
+                    <span id="groceries-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill good" id="groceries-progress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="category-card" onclick="showCategory('Dining Out')">
+                <div class="category-name">Dining Out</div>
+                <div class="category-amounts">
+                    <div class="spent-amount">$<span id="dining-spent">0</span></div>
+                    <div class="remaining-amount good">$<span id="dining-left">200</span> left</div>
+                </div>
+                <div class="progress-info">
+                    <span>Budget: $200</span>
+                    <span id="dining-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill good" id="dining-progress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="category-card" onclick="showCategory('Gas')">
+                <div class="category-name">Gas</div>
+                <div class="category-amounts">
+                    <div class="spent-amount">$<span id="gas-spent">0</span></div>
+                    <div class="remaining-amount good">$<span id="gas-left">150</span> left</div>
+                </div>
+                <div class="progress-info">
+                    <span>Budget: $150</span>
+                    <span id="gas-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill good" id="gas-progress" style="width: 0%"></div>
+                </div>
             </div>
         </div>
 
-        <div class="categories-grid" id="categories-grid">
-            <!-- Categories will be populated by JavaScript -->
-        </div>
-    </div>
-
-    <!-- Amount Entry Modal -->
-    <div id="amount-modal" class="modal" style="display: none;">
-        <div class="amount-entry">
-            <div class="entry-category" id="entry-icon">☕</div>
-            <div class="entry-title" id="entry-title">Coffee</div>
-            <div class="amount-display" id="amount-display">$0.00</div>
-            
-            <div class="keypad">
-                <button class="key" onclick="addDigit('1')">1</button>
-                <button class="key" onclick="addDigit('2')">2</button>
-                <button class="key" onclick="addDigit('3')">3</button>
-                <button class="key" onclick="addDigit('4')">4</button>
-                <button class="key" onclick="addDigit('5')">5</button>
-                <button class="key" onclick="addDigit('6')">6</button>
-                <button class="key" onclick="addDigit('7')">7</button>
-                <button class="key" onclick="addDigit('8')">8</button>
-                <button class="key" onclick="addDigit('9')">9</button>
-                <button class="key zero" onclick="addDigit('0')">0</button>
-                <button class="key" onclick="backspace()">⌫</button>
+        <div class="voice-section">
+            <div id="recognized-text" class="recognized-text" style="display: none;"></div>
+            <div id="manual-entry" class="manual-entry-form" style="display: none;">
+                <input type="text" class="manual-input" id="manual-input" placeholder='Type: "coffee 6" or "groceries 25"' onkeyup="handleEnter(event)">
+                <div class="manual-buttons">
+                    <button class="btn-manual secondary" onclick="hideManualEntry()">Cancel</button>
+                    <button class="btn-manual primary" onclick="submitManualEntry()" id="manual-submit" disabled>Add Expense</button>
+                </div>
             </div>
             
-            <div class="entry-actions">
-                <button class="entry-btn cancel" onclick="cancelEntry()">Cancel</button>
-                <button class="entry-btn add" id="add-btn" onclick="addExpense()" disabled>Add</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal" style="display: none;">
-        <div class="settings-modal">
-            <div class="settings-header">
-                <h2 class="settings-title">Settings</h2>
-                <button class="close-btn" onclick="hideSettings()">Done</button>
+            <div class="input-buttons">
+                <button class="voice-button" id="voice-btn" onclick="toggleVoice()">🎤</button>
+                <button class="manual-button" onclick="toggleManualEntry()">✏️</button>
             </div>
             
-            <div class="settings-content">
-                <button id="install-button" class="install-prompt" style="display: none;" onclick="installApp()">
-                    📱 Install App
-                </button>
-                
-                                    <div class="settings-section">
-                        <h3 class="section-title">Account</h3>
-                        <div class="settings-item">
-                            <span class="item-label" id="user-email">Not signed in</span>
-                            <button class="btn-danger" onclick="signOut()" id="signout-btn">Sign Out</button>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-section">
-                    <h3 class="section-title">This Month's Expenses</h3>
-                    <div id="current-expenses-list">
-                        <!-- Current expenses will be populated by JavaScript -->
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="section-title">Categories</h3>
-                    <div id="categories-list">
-                        <!-- Categories will be populated by JavaScript -->
-                    </div>
-                    <button class="btn-primary" onclick="addCategory()">Add Category</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="section-title">Users</h3>
-                    <div id="users-list">
-                        <!-- Users will be populated by JavaScript -->
-                    </div>
-                    <button class="btn-primary" onclick="addUser()">Add User</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="section-title">Data</h3>
-                    <div class="settings-item">
-                        <span class="item-label">View History</span>
-                        <button class="btn-primary" onclick="viewHistory()">View</button>
-                    </div>
-                    <div class="settings-item">
-                        <span class="item-label">Export Data</span>
-                        <button class="btn-primary" onclick="exportData()">Export</button>
-                    </div>
-                    <div class="settings-item">
-                        <span class="item-label">Clear All Data</span>
-                        <button class="btn-danger" onclick="clearAllData()">Clear</button>
-                    </div>
-                </div>
-            </div>
+            <div class="voice-status" id="voice-status">Tap 🎤 for voice or ✏️ to type</div>
         </div>
     </div>
 
-    <!-- Auth Modal -->
-    <div id="auth-modal" class="modal" style="display: none;">
-        <div class="auth-modal">
-            <h2 class="auth-title">Welcome!</h2>
-            <p class="auth-subtitle">Sign in to sync expenses between devices</p>
-            
-            <form class="auth-form" id="auth-form" onsubmit="return false;">
-                <input type="email" class="auth-input" id="auth-email" placeholder="Email" required>
-                <input type="password" class="auth-input" id="auth-password" placeholder="Password" required>
-                
-                <button type="button" class="auth-btn primary" id="auth-submit" onclick="handleAuth()">
-                    Sign In
-                </button>
-                <button type="button" class="auth-btn secondary" onclick="toggleAuthMode()" id="auth-toggle">
-                    Create Account
-                </button>
-            </form>
-            
-            <div class="auth-switch">
-                <span id="auth-switch-text">Don't have an account?</span>
-                <span class="auth-link" onclick="toggleAuthMode()" id="auth-switch-link">Sign up</span>
-            </div>
-        </div>
-    </div>
+    <!-- Modals will be inserted here -->
+    <div id="modal-container"></div>
 
-    <!-- Edit Expense Modal -->
-    <div id="edit-modal" class="modal" style="display: none;">
-        <div class="edit-modal">
-            <h3 style="margin-bottom: 20px;">Edit Expense</h3>
-            <form class="edit-form" onsubmit="return false;">
-                <div class="form-group">
-                    <label class="form-label">Amount</label>
-                    <input type="number" step="0.01" class="form-input" id="edit-amount" placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Category</label>
-                    <select class="form-select" id="edit-category">
-                        <!-- Options populated by JavaScript -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">User</label>
-                    <select class="form-select" id="edit-user">
-                        <!-- Options populated by JavaScript -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="datetime-local" class="form-input" id="edit-date">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="form-btn cancel" onclick="cancelEdit()">Cancel</button>
-                    <button type="button" class="form-btn save" onclick="saveEdit()">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Load Firebase config from environment -->
+    <script src="firebase-config.js"></script>
+    
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            // You'll need to replace these with your Firebase project config
-            apiKey: "AIzaSyBrC2s7GkOZtbrrgG-LsGPDJ-csIuMtjpo",
-            authDomain: "household-expenses-163f9.firebaseapp.com",
-            projectId: "household-expenses-163f9",
-            storageBucket: "household-expenses-163f9.firebasestorage.app",
-            messagingSenderId: "557423677070",
-            appId: "1:557423677070:web:f23f5ca5973b7e020043df",
-            measurementId: "G-08CZFD9J06"
+        // Initialize Firebase
+        let app, auth, db;
+        try {
+            // firebaseConfig will be loaded from firebase-config.js
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Failed to initialize app. Please check your configuration.');
+        }
+
+        let isListening = false;
+        let recognition = null;
+        let currentUser = null;
+        let expenses = [];
+        let unsubscribeExpenses = null;
+        
+        const budgets = {
+            'coffee': 100,
+            'groceries': 600,
+            'dining': 200,
+            'gas': 150
         };
 
-        // Initialize Firebase
-        // firebase.initializeApp(firebaseConfig);
-        // const auth = firebase.auth();
-        // const db = firebase.firestore();
-        
-        // Auth state
-        let currentUser = null;
-        let isSigningIn = false;
-        let householdId = null;
-        
-        // PWA Installation
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-button').style.display = 'block';
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('recognized-text').textContent = '"' + transcript + '"';
+                document.getElementById('recognized-text').style.display = 'block';
+                
+                setTimeout(() => {
+                    processVoiceInput(transcript);
+                }, 1000);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                stopListening();
+                alert('Speech recognition failed. Please try again.');
+            };
+            
+            recognition.onend = function() {
+                stopListening();
+            };
+        }
+
+        // Auth state observer
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                showApp();
+                loadExpenses();
+            } else {
+                currentUser = null;
+                showLogin();
+                if (unsubscribeExpenses) {
+                    unsubscribeExpenses();
+                }
+            }
         });
 
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        document.getElementById('install-button').style.display = 'none';
-                    }
-                    deferredPrompt = null;
-                });
-            }
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hide');
+            setTimeout(() => {
+                errorEl.classList.add('hide');
+            }, 5000);
         }
 
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then((registration) => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch((registrationError) => {
-                        console.log('SW registration failed: ', registrationError);
-                    });
-            });
-        }
-
-        // App State
-        let currentUserName = 'Me';
-        let currentCategory = null;
-        let entryAmount = '';
-        let editingExpense = null;
-        
-        // Data will now come from Firebase instead of localStorage
-        let users = ['Me', 'Partner'];
-        let categories = [
-            {"id": "coffee", "name": "Coffee", "icon": "☕", "budget": 100},
-            {"id": "dining", "name": "Dining Out", "icon": "🍽️", "budget": 200},
-            {"id": "groceries", "name": "Groceries", "icon": "🛒", "budget": 600},
-            {"id": "misc", "name": "Miscellaneous", "icon": "📦", "budget": 150}
-        ];
-        let expenses = [];
-
-        // Firebase Auth State Listener
-        // auth.onAuthStateChanged((user) => {
-        //    if (user) {
-        //        currentUser = user;
-        //        document.getElementById('user-email').textContent = user.email;
-        //        initializeHousehold();
-        //        hideAuthModal();
-        //    } else {
-        //        currentUser = null;
-        //        showAuthModal();
-        //    }
-        // });
-
-        function showAuthModal() {
-            document.getElementById('auth-modal').style.display = 'flex';
-        }
-
-        function hideAuthModal() {
-            document.getElementById('auth-modal').style.display = 'none';
-        }
-
-        let authMode = 'signin'; // 'signin' or 'signup'
-
-        function toggleAuthMode() {
-            authMode = authMode === 'signin' ? 'signup' : 'signin';
+        function toggleSignUp(show) {
+            const loginForm = document.getElementById('email-login-form');
+            const signupForm = document.getElementById('email-signup-form');
             
-            if (authMode === 'signup') {
-                document.getElementById('auth-submit').textContent = 'Create Account';
-                document.getElementById('auth-toggle').textContent = 'Sign In Instead';
-                document.getElementById('auth-switch-text').textContent = 'Already have an account?';
-                document.getElementById('auth-switch-link').textContent = 'Sign in';
+            if (show) {
+                loginForm.classList.add('hide');
+                signupForm.classList.remove('hide');
             } else {
-                document.getElementById('auth-submit').textContent = 'Sign In';
-                document.getElementById('auth-toggle').textContent = 'Create Account';
-                document.getElementById('auth-switch-text').textContent = "Don't have an account?";
-                document.getElementById('auth-switch-link').textContent = 'Sign up';
+                loginForm.classList.remove('hide');
+                signupForm.classList.add('hide');
             }
         }
 
-        async function handleAuth() {
-            if (isSigningIn) return;
-            
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
+        async function emailLogin() {
+            const email = document.getElementById('email-input').value;
+            const password = document.getElementById('password-input').value;
             
             if (!email || !password) {
-                alert('Please enter email and password');
+                showError('Please enter email and password');
                 return;
             }
             
-            isSigningIn = true;
-            document.getElementById('auth-submit').disabled = true;
-            document.getElementById('auth-submit').textContent = authMode === 'signup' ? 'Creating...' : 'Signing in...';
-            
             try {
-                if (authMode === 'signup') {
-                    await auth.createUserWithEmailAndPassword(email, password);
-                } else {
-                    await auth.signInWithEmailAndPassword(email, password);
-                }
+                await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
-                alert(error.message);
+                showError(error.message);
             }
-            
-            isSigningIn = false;
-            document.getElementById('auth-submit').disabled = false;
-            toggleAuthMode(); // Reset button text
         }
 
-        async function signOut() {
-            if (confirm('Sign out? This will stop syncing between devices.')) {
+        async function emailSignUp() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            
+            if (!email || !password || !confirm) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+            
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function googleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.signInWithPopup(provider);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
                 await auth.signOut();
-                location.reload();
             }
         }
 
-        async function initializeHousehold() {
-            try {
-                // Check if user has a household
-                const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                
-                if (userDoc.exists && userDoc.data().householdId) {
-                    householdId = userDoc.data().householdId;
-                } else {
-                    // Create new household
-                    const householdRef = await db.collection('households').add({
-                        createdBy: currentUser.uid,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        users: [currentUser.uid],
-                        categories: categories,
-                        userNames: users
-                    });
-                    
-                    householdId = householdRef.id;
-                    
-                    // Link user to household
-                    await db.collection('users').doc(currentUser.uid).set({
-                        householdId: householdId,
-                        email: currentUser.email
-                    });
-                }
-                
-                // Listen for household data changes
-                listenToHouseholdData();
-                updateSyncStatus('synced');
-                
-            } catch (error) {
-                console.error('Error initializing household:', error);
-                updateSyncStatus('error');
-            }
+        function showLogin() {
+            document.getElementById('login-screen').classList.remove('hide');
+            document.getElementById('app').classList.add('hide');
         }
 
-        function listenToHouseholdData() {
-            // Listen to household settings
-            db.collection('households').doc(householdId).onSnapshot((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    categories = data.categories || categories;
-                    users = data.userNames || users;
-                    renderCategories();
-                    renderSettings();
-                }
-            });
+        function showApp() {
+            document.getElementById('login-screen').classList.add('hide');
+            document.getElementById('app').classList.remove('hide');
+            document.getElementById('user-info').textContent = currentUser.email;
+        }
+
+        function loadExpenses() {
+            if (unsubscribeExpenses) {
+                unsubscribeExpenses();
+            }
             
-            // Listen to expenses
-            const currentMonth = new Date();
-            const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-            
-            db.collection('expenses')
-                .where('householdId', '==', householdId)
-                .where('date', '>=', monthStart)
+            // Real-time listener for expenses
+            unsubscribeExpenses = db.collection('expenses')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('date', 'desc')
                 .onSnapshot((snapshot) => {
                     expenses = [];
                     snapshot.forEach((doc) => {
                         expenses.push({ id: doc.id, ...doc.data() });
                     });
-                    renderCategories();
-                    renderCurrentExpenses();
+                    updateDisplay();
+                }, (error) => {
+                    console.error('Error loading expenses:', error);
                 });
         }
 
-        function updateSyncStatus(status) {
-            const dot = document.getElementById('sync-dot');
-            const text = document.getElementById('sync-text');
-            
-            dot.className = 'sync-dot';
-            
-            switch (status) {
-                case 'synced':
-                    text.textContent = 'Synced';
-                    break;
-                case 'syncing':
-                    text.textContent = 'Syncing...';
-                    dot.classList.add('offline');
-                    break;
-                case 'offline':
-                    text.textContent = 'Offline';
-                    dot.classList.add('offline');
-                    break;
-                case 'error':
-                    text.textContent = 'Sync Error';
-                    dot.classList.add('error');
-                    break;
-            }
-        }
-
-        // Initialize app
-        function init() {
-            updateMonthInfo();
-            
-            // Check if user is already signed in
-            if (!currentUser) {
-                showAuthModal();
-            }
-        }
-
-        function checkMonthRollover() {
-            const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${now.getMonth()}`;
-            const lastMonth = localStorage.getItem('expense-last-month');
-            
-            if (lastMonth && lastMonth !== currentMonth) {
-                // Month has changed - archive old expenses and reset
-                archiveLastMonth();
-            }
-            
-            localStorage.setItem('expense-last-month', currentMonth);
-        }
-
-        function archiveLastMonth() {
-            // Move current expenses to archive
-            const archived = JSON.parse(localStorage.getItem('expense-archive') || '[]');
-            const currentMonthExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                const now = new Date();
-                return expenseDate.getMonth() !== now.getMonth() || 
-                       expenseDate.getFullYear() !== now.getFullYear();
-            });
-            
-            if (currentMonthExpenses.length > 0) {
-                archived.push(...currentMonthExpenses);
-                localStorage.setItem('expense-archive', JSON.stringify(archived));
-                
-                // Keep only current month expenses
-                expenses = expenses.filter(expense => {
-                    const expenseDate = new Date(expense.date);
-                    const now = new Date();
-                    return expenseDate.getMonth() === now.getMonth() && 
-                           expenseDate.getFullYear() === now.getFullYear();
-                });
-                
-                localStorage.setItem('expense-data', JSON.stringify(expenses));
-                
-                console.log(`Archived ${currentMonthExpenses.length} expenses from last month`);
-            }
-        }
-
-        function updateMonthInfo() {
-            const now = new Date();
-            const monthNames = ["January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"];
-            document.getElementById('month-info').textContent = 
-                `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
-        }
-
-        function setUser(user) {
-            currentUserName = user;
-            document.querySelectorAll('.user-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent === user);
-            });
-            renderCategories();
-        }
-
-        function renderCategories() {
-            const grid = document.getElementById('categories-grid');
-            grid.innerHTML = '';
-
-            categories.forEach(category => {
-                const spent = getCurrentMonthTotal(category.id);
-                const percentage = category.budget > 0 ? (spent / category.budget) * 100 : 0;
-                let progressClass = 'good';
-                if (percentage >= 100) progressClass = 'over';
-                else if (percentage >= 80) progressClass = 'warning';
-
-                const card = document.createElement('div');
-                card.className = 'category-card';
-                card.onclick = () => showAmountEntry(category);
-                
-                card.innerHTML = `
-                    <div class="category-icon">${category.icon}</div>
-                    <div class="category-name">${category.name}</div>
-                    <div class="category-spent">$${spent.toFixed(2)}</div>
-                    <div class="category-budget">of $${category.budget}</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill ${progressClass}" 
-                             style="width: ${Math.min(percentage, 100)}%"></div>
-                    </div>
-                `;
-                
-                grid.appendChild(card);
-            });
-        }
-
-        function getCurrentMonthTotal(categoryId) {
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-
-            return expenses
-                .filter(expense => {
-                    const expenseDate = expense.date instanceof Date ? expense.date : expense.date.toDate();
-                    return expense.category === categoryId &&
-                           expenseDate.getMonth() === currentMonth &&
-                           expenseDate.getFullYear() === currentYear;
-                })
-                .reduce((total, expense) => total + expense.amount, 0);
-        }
-
-        function showAmountEntry(category) {
-            currentCategory = category;
-            entryAmount = '';
-            
-            document.getElementById('entry-icon').textContent = category.icon;
-            document.getElementById('entry-title').textContent = category.name;
-            document.getElementById('amount-display').textContent = '$0.00';
-            document.getElementById('add-btn').disabled = true;
-            document.getElementById('amount-modal').style.display = 'flex';
-        }
-
-        function addDigit(digit) {
-            if (entryAmount.length < 8) { // Limit to prevent overflow
-                entryAmount += digit;
-                updateAmountDisplay();
-            }
-        }
-
-        function backspace() {
-            entryAmount = entryAmount.slice(0, -1);
-            updateAmountDisplay();
-        }
-
-        function updateAmountDisplay() {
-            if (entryAmount === '') {
-                document.getElementById('amount-display').textContent = '$0.00';
-                document.getElementById('add-btn').disabled = true;
+        function toggleVoice() {
+            if (!recognition) {
+                alert('Speech recognition not supported in this browser');
                 return;
             }
 
-            // Convert to cents and format as dollars
-            const cents = parseInt(entryAmount);
-            const dollars = cents / 100;
-            document.getElementById('amount-display').textContent = `$${dollars.toFixed(2)}`;
-            document.getElementById('add-btn').disabled = dollars === 0;
+            if (isListening) {
+                stopListening();
+            } else {
+                hideManualEntry();
+                startListening();
+            }
         }
 
-        async function addExpense() {
-            if (entryAmount === '' || parseInt(entryAmount) === 0) return;
+        function toggleManualEntry() {
+            const manualEntry = document.getElementById('manual-entry');
+            if (manualEntry.style.display === 'none') {
+                showManualEntry();
+            } else {
+                hideManualEntry();
+            }
+        }
 
-            const amount = parseInt(entryAmount) / 100;
-            const expense = {
-                category: currentCategory.id,
-                amount: amount,
-                user: currentUserName,
-                date: new Date(),
-                householdId: householdId
-            };
+        function showManualEntry() {
+            if (isListening) stopListening();
+            document.getElementById('manual-entry').style.display = 'block';
+            document.getElementById('manual-input').focus();
+            document.getElementById('voice-status').textContent = 'Type expense above';
+        }
 
+        function hideManualEntry() {
+            document.getElementById('manual-entry').style.display = 'none';
+            document.getElementById('manual-input').value = '';
+            document.getElementById('manual-submit').disabled = true;
+            document.getElementById('voice-status').textContent = 'Tap 🎤 for voice or ✏️ to type';
+        }
+
+        function handleEnter(event) {
+            const input = event.target.value;
+            document.getElementById('manual-submit').disabled = !input.trim();
+            
+            if (event.key === 'Enter' && input.trim()) {
+                submitManualEntry();
+            }
+        }
+
+        async function submitManualEntry() {
+            const text = document.getElementById('manual-input').value;
+            if (text.trim()) {
+                const result = parseExpense(text);
+                if (result) {
+                    await addExpense(result.category, result.amount, text);
+                    hideManualEntry();
+                } else {
+                    alert(`❌ Could not parse "${text}"\nTry: "coffee 6" or "groceries 25"`);
+                }
+            }
+        }
+
+        function startListening() {
+            isListening = true;
+            document.getElementById('voice-btn').classList.add('listening');
+            document.getElementById('voice-btn').textContent = '⏹️';
+            document.getElementById('voice-status').textContent = 'Listening... Say "coffee 6"';
+            document.getElementById('recognized-text').style.display = 'none';
+            
             try {
-                updateSyncStatus('syncing');
-                await db.collection('expenses').add(expense);
-                updateSyncStatus('synced');
-                cancelEntry();
+                recognition.start();
+            } catch (error) {
+                console.error('Failed to start recognition:', error);
+                stopListening();
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+            document.getElementById('voice-btn').classList.remove('listening');
+            document.getElementById('voice-btn').textContent = '🎤';
+            document.getElementById('voice-status').textContent = 'Tap 🎤 for voice or ✏️ to type';
+            
+            if (recognition) {
+                recognition.stop();
+            }
+        }
+
+        async function processVoiceInput(text) {
+            const result = parseExpense(text);
+            
+            if (result) {
+                await addExpense(result.category, result.amount, text);
+            } else {
+                alert(`❌ Could not parse "${text}"\nTry: "coffee 6" or "groceries 25"`);
+            }
+            
+            document.getElementById('recognized-text').style.display = 'none';
+        }
+
+        function parseExpense(text) {
+            const lowercaseText = text.toLowerCase().trim();
+            
+            // Find category
+            let category = null;
+            if (lowercaseText.includes('coffee')) category = 'coffee';
+            else if (lowercaseText.includes('groceries') || lowercaseText.includes('grocery')) category = 'groceries';
+            else if (lowercaseText.includes('dining') || lowercaseText.includes('restaurant') || lowercaseText.includes('food')) category = 'dining';
+            else if (lowercaseText.includes('gas') || lowercaseText.includes('fuel')) category = 'gas';
+            
+            // Extract amount
+            const numberMatch = text.match(/(\d+\.?\d*)/);
+            const amount = numberMatch ? parseFloat(numberMatch[1]) : null;
+            
+            if (category && amount && amount > 0) {
+                return { category, amount };
+            }
+            
+            return null;
+        }
+
+        async function addExpense(category, amount, transcription) {
+            try {
+                await db.collection('expenses').add({
+                    category: category,
+                    amount: amount,
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    date: firebase.firestore.FieldValue.serverTimestamp(),
+                    transcription: transcription
+                });
+                
+                alert(`✅ Added ${amount} to ${category}`);
             } catch (error) {
                 console.error('Error adding expense:', error);
-                updateSyncStatus('error');
                 alert('Failed to add expense. Please try again.');
             }
         }
 
-        function cancelEntry() {
-            document.getElementById('amount-modal').style.display = 'none';
-            currentCategory = null;
-            entryAmount = '';
-        }
-
-        function showSettings() {
-            renderSettings();
-            document.getElementById('settings-modal').style.display = 'flex';
-            setTimeout(() => {
-                document.querySelector('.settings-modal').classList.add('show');
-            }, 10);
-        }
-
-        function hideSettings() {
-            document.querySelector('.settings-modal').classList.remove('show');
-            setTimeout(() => {
-                document.getElementById('settings-modal').style.display = 'none';
-            }, 300);
-        }
-
-        function renderSettings() {
-            // Render current month expenses
-            renderCurrentExpenses();
-            
-            // Render categories
-            const categoriesList = document.getElementById('categories-list');
-            categoriesList.innerHTML = '';
+        function updateDisplay() {
+            const categories = ['coffee', 'groceries', 'dining', 'gas'];
             
             categories.forEach(category => {
-                const item = document.createElement('div');
-                item.className = 'settings-item';
-                item.innerHTML = `
-                    <span class="item-label">${category.icon} ${category.name}</span>
-                    <span class="item-value">${category.budget}</span>
-                `;
-                item.onclick = () => editCategory(category);
-                categoriesList.appendChild(item);
-            });
-
-            // Render users
-            const usersList = document.getElementById('users-list');
-            usersList.innerHTML = '';
-            
-            users.forEach(user => {
-                const item = document.createElement('div');
-                item.className = 'settings-item';
-                item.innerHTML = `
-                    <span class="item-label">${user}</span>
-                    <button class="btn-danger" onclick="removeUser('${user}')">Remove</button>
-                `;
-                usersList.appendChild(item);
-            });
-        }
-
-        function renderCurrentExpenses() {
-            const expensesList = document.getElementById('current-expenses-list');
-            expensesList.innerHTML = '';
-            
-            // Get current month expenses sorted by date (newest first)
-            const currentExpenses = expenses
-                .filter(expense => {
-                    const expenseDate = new Date(expense.date);
-                    const now = new Date();
-                    return expenseDate.getMonth() === now.getMonth() && 
-                           expenseDate.getFullYear() === now.getFullYear();
-                })
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            if (currentExpenses.length === 0) {
-                expensesList.innerHTML = '<div class="no-expenses">No expenses this month</div>';
-                return;
-            }
-            
-            currentExpenses.forEach(expense => {
-                const category = categories.find(c => c.id === expense.category);
-                const categoryName = category ? category.name : expense.category;
-                const categoryIcon = category ? category.icon : '📦';
+                const categoryExpenses = getCurrentMonthExpenses(category);
+                const spent = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+                const budget = budgets[category];
+                const remaining = Math.max(budget - spent, 0);
+                const progress = Math.min(spent / budget, 1);
+                const isOverBudget = spent > budget;
                 
-                const expenseElement = document.createElement('div');
-                expenseElement.className = 'expense-item';
-                expenseElement.innerHTML = `
-                    <div class="expense-header">
-                        <span class="expense-amount">${expense.amount.toFixed(2)}</span>
-                        <span class="expense-category">${categoryIcon} ${categoryName}</span>
-                    </div>
-                    <div class="expense-details">
-                        <span>${expense.user}</span>
-                        <span>${formatExpenseDate(new Date(expense.date))}</span>
-                    </div>
-                    <div class="expense-actions">
-                        <button class="btn-small btn-edit" onclick="editExpense('${expense.id}')">Edit</button>
-                        <button class="btn-small btn-delete" onclick="deleteExpense('${expense.id}')">Delete</button>
-                    </div>
-                `;
-                expensesList.appendChild(expenseElement);
+                // Update spent amount
+                document.getElementById(category + '-spent').textContent = Math.ceil(spent);
+                
+                // Update remaining/over amount
+                const remainingElement = document.querySelector(`#${category}-left`).parentElement;
+                if (isOverBudget) {
+                    document.getElementById(category + '-left').textContent = Math.ceil(spent - budget);
+                    remainingElement.innerHTML = `${Math.ceil(spent - budget)} over`;
+                    remainingElement.className = 'remaining-amount over';
+                } else {
+                    document.getElementById(category + '-left').textContent = Math.ceil(remaining);
+                    remainingElement.innerHTML = `${Math.ceil(remaining)} left`;
+                    remainingElement.className = progress > 0.8 ? 'remaining-amount warning' : 'remaining-amount good';
+                }
+                
+                // Update percentage
+                document.getElementById(category + '-percent').textContent = Math.round(progress * 100) + '%';
+                
+                // Update progress bar
+                const progressBar = document.getElementById(category + '-progress');
+                progressBar.style.width = Math.min(progress * 100, 100) + '%';
+                progressBar.className = `progress-fill ${isOverBudget ? 'over' : progress > 0.8 ? 'warning' : 'good'}`;
             });
         }
 
-        function formatExpenseDate(date) {
+        function getCurrentMonthExpenses(category) {
             const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const expenseDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
             
-            if (expenseDay.getTime() === today.getTime()) {
-                return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-            } else {
-                return date.toLocaleDateString([], {month: 'short', day: 'numeric'});
-            }
+            return expenses.filter(expense => {
+                if (!expense.date) return false;
+                
+                // Handle Firestore timestamp
+                const expenseDate = expense.date.toDate ? expense.date.toDate() : new Date(expense.date);
+                const matchesMonth = expenseDate.getMonth() === currentMonth && 
+                       expenseDate.getFullYear() === currentYear;
+                const matchesCategory = expense.category === category;
+                
+                return matchesMonth && matchesCategory;
+            });
         }
 
-        function editExpense(expenseId) {
+        function showCategory(categoryName) {
+            const categoryKey = categoryName.toLowerCase();
+            const categoryExpenses = getCurrentMonthExpenses(categoryKey);
+            const total = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <div>
+                                <div class="modal-title">${categoryName}</div>
+                                <div style="font-size: 12px; color: #6e6e73; margin-top: 4px;">
+                                    ${currentUser.email}
+                                </div>
+                            </div>
+                            <button class="btn-close" onclick="closeModal()">Done</button>
+                        </div>
+                        
+                        <div style="padding: 16px 20px; border-bottom: 1px solid #f2f2f7;">
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">
+                                Total this month: ${total.toFixed(2)}
+                            </div>
+                            <div style="font-size: 14px; color: #6e6e73;">
+                                Budget: ${budgets[categoryKey]}.00
+                            </div>
+                        </div>
+                        
+                        <div class="expense-list">
+                            ${categoryExpenses.length === 0 ? 
+                                '<div class="no-expenses">No expenses this month</div>' :
+                                categoryExpenses.sort((a, b) => {
+                                    const dateA = a.date.toDate ? a.date.toDate() : new Date(a.date);
+                                    const dateB = b.date.toDate ? b.date.toDate() : new Date(b.date);
+                                    return dateB - dateA;
+                                })
+                                    .map(expense => `
+                                        <div class="expense-item">
+                                            <div class="expense-header">
+                                                <span class="expense-amount">${expense.amount.toFixed(2)}</span>
+                                                <div class="expense-actions">
+                                                    <span class="expense-user">${expense.userEmail.split('@')[0]}</span>
+                                                    <button class="btn-expense btn-edit" onclick="editExpense('${expense.id}')">Edit</button>
+                                                    <button class="btn-expense btn-delete" onclick="deleteExpense('${expense.id}')">Delete</button>
+                                                </div>
+                                            </div>
+                                            <div class="expense-date">
+                                                ${formatDate(expense.date.toDate ? expense.date.toDate() : new Date(expense.date))}
+                                            </div>
+                                            ${expense.transcription ? `
+                                                <div class="expense-transcription">
+                                                    "${expense.transcription}"
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `).join('')
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        async function editExpense(expenseId) {
             const expense = expenses.find(e => e.id === expenseId);
             if (!expense) return;
             
-            editingExpense = expense;
-            
-            // Populate edit form
-            document.getElementById('edit-amount').value = expense.amount.toFixed(2);
-            
-            // Populate category dropdown
-            const categorySelect = document.getElementById('edit-category');
-            categorySelect.innerHTML = '';
-            categories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category.id;
-                option.textContent = `${category.icon} ${category.name}`;
-                option.selected = category.id === expense.category;
-                categorySelect.appendChild(option);
-            });
-            
-            // Populate user dropdown
-            const userSelect = document.getElementById('edit-user');
-            userSelect.innerHTML = '';
-            users.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user;
-                option.textContent = user;
-                option.selected = user === expense.user;
-                userSelect.appendChild(option);
-            });
-            
-            // Set date
-            const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
-            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-            document.getElementById('edit-date').value = date.toISOString().slice(0, 16);
-            
-            // Show modal
-            document.getElementById('edit-modal').style.display = 'flex';
-        }
-
-        function saveEdit() {
-            if (!editingExpense) return;
-            
-            const amount = parseFloat(document.getElementById('edit-amount').value);
-            const category = document.getElementById('edit-category').value;
-            const user = document.getElementById('edit-user').value;
-            const date = document.getElementById('edit-date').value;
-            
-            if (isNaN(amount) || amount <= 0) {
-                alert('Please enter a valid amount');
-                return;
+            const newAmount = prompt(`Edit amount for ${expense.category}:`, expense.amount);
+            if (newAmount && !isNaN(parseFloat(newAmount))) {
+                try {
+                    await db.collection('expenses').doc(expenseId).update({
+                        amount: parseFloat(newAmount)
+                    });
+                    closeModal();
+                } catch (error) {
+                    console.error('Error updating expense:', error);
+                    alert('Failed to update expense');
+                }
             }
-            
-            // Update expense
-            editingExpense.amount = amount;
-            editingExpense.category = category;
-            editingExpense.user = user;
-            editingExpense.date = new Date(date).toISOString();
-            
-            saveData();
-            cancelEdit();
-            renderCategories();
-            renderCurrentExpenses();
         }
 
-        function cancelEdit() {
-            document.getElementById('edit-modal').style.display = 'none';
-            editingExpense = null;
-        }
-
-        function deleteExpense(expenseId) {
+        async function deleteExpense(expenseId) {
             const expense = expenses.find(e => e.id === expenseId);
             if (!expense) return;
             
-            const category = categories.find(c => c.id === expense.category);
-            const categoryName = category ? category.name : expense.category;
-            
-            if (confirm(`Delete ${expense.amount.toFixed(2)} ${categoryName} expense?`)) {
-                expenses = expenses.filter(e => e.id !== expenseId);
-                saveData();
-                renderCategories();
-                renderCurrentExpenses();
-            }
-        }
-
-        function editCategory(category) {
-            const newName = prompt('Category name:', category.name);
-            if (newName && newName.trim()) {
-                category.name = newName.trim();
-            }
-
-            const newBudget = prompt('Monthly budget:', category.budget);
-            if (newBudget && !isNaN(parseFloat(newBudget))) {
-                category.budget = parseFloat(newBudget);
-            }
-
-            const newIcon = prompt('Category icon:', category.icon);
-            if (newIcon && newIcon.trim()) {
-                category.icon = newIcon.trim();
-            }
-
-            saveData();
-            renderCategories();
-            renderSettings();
-        }
-
-        function addCategory() {
-            const name = prompt('Category name:');
-            if (!name || !name.trim()) return;
-
-            const budget = prompt('Monthly budget:');
-            if (!budget || isNaN(parseFloat(budget))) return;
-
-            const icon = prompt('Category icon:', '📦');
-            if (!icon || !icon.trim()) return;
-
-            const category = {
-                id: Date.now().toString(),
-                name: name.trim(),
-                icon: icon.trim(),
-                budget: parseFloat(budget)
-            };
-
-            categories.push(category);
-            saveData();
-            renderCategories();
-            renderSettings();
-        }
-
-        function addUser() {
-            const name = prompt('User name:');
-            if (!name || !name.trim() || users.includes(name.trim())) return;
-
-            users.push(name.trim());
-            saveData();
-            renderSettings();
-            updateUserSelector();
-        }
-
-        function removeUser(user) {
-            if (users.length <= 1) {
-                alert('Cannot remove the last user');
-                return;
-            }
-
-            if (confirm(`Remove user "${user}"? This will also delete all their expenses.`)) {
-                users = users.filter(u => u !== user);
-                expenses = expenses.filter(e => e.user !== user);
-                
-                if (currentUser === user) {
-                    setUser(users[0]);
+            if (confirm(`Delete ${expense.amount.toFixed(2)} expense?`)) {
+                try {
+                    await db.collection('expenses').doc(expenseId).delete();
+                    closeModal();
+                } catch (error) {
+                    console.error('Error deleting expense:', error);
+                    alert('Failed to delete expense');
                 }
-                
-                saveData();
-                renderSettings();
-                updateUserSelector();
             }
         }
 
-        function updateUserSelector() {
-            const selector = document.querySelector('.user-selector');
-            selector.innerHTML = '';
+        function closeModal() {
+            document.getElementById('modal-container').innerHTML = '';
+        }
+
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            }).format(date);
+        }
+
+        function showHistory() {
+            const allExpenses = [...expenses];
+            const total = allExpenses.reduce((sum, expense) => sum + expense.amount, 0);
             
-            users.forEach(user => {
-                const btn = document.createElement('button');
-                btn.className = 'user-btn';
-                btn.textContent = user;
-                btn.onclick = () => setUser(user);
-                if (user === currentUser) btn.classList.add('active');
-                selector.appendChild(btn);
+            const modal = `
+                <div class="modal" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <div>
+                                <div class="modal-title">All Expenses</div>
+                                <div style="font-size: 12px; color: #6e6e73; margin-top: 4px;">
+                                    Total: ${total.toFixed(2)}
+                                </div>
+                            </div>
+                            <button class="btn-close" onclick="closeModal()">Done</button>
+                        </div>
+                        
+                        <div class="expense-list">
+                            ${allExpenses.length === 0 ? 
+                                '<div class="no-expenses">No expenses yet</div>' :
+                                allExpenses.sort((a, b) => {
+                                    const dateA = a.date.toDate ? a.date.toDate() : new Date(a.date);
+                                    const dateB = b.date.toDate ? b.date.toDate() : new Date(b.date);
+                                    return dateB - dateA;
+                                })
+                                    .map(expense => `
+                                        <div class="expense-item">
+                                            <div class="expense-header">
+                                                <span class="expense-amount">${expense.amount.toFixed(2)}</span>
+                                                <div class="expense-actions">
+                                                    <span class="expense-user">${expense.category}</span>
+                                                    <button class="btn-expense btn-delete" onclick="deleteExpense('${expense.id}')">Delete</button>
+                                                </div>
+                                            </div>
+                                            <div class="expense-date">
+                                                ${formatDate(expense.date.toDate ? expense.date.toDate() : new Date(expense.date))}
+                                            </div>
+                                            ${expense.transcription ? `
+                                                <div class="expense-transcription">
+                                                    "${expense.transcription}"
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `).join('')
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('ServiceWorker registered'))
+                    .catch(err => console.log('ServiceWorker registration failed: ', err));
             });
         }
-
-        // Remove localStorage functions - now using Firebase
-        function saveData() {
-            // Data is automatically saved to Firebase
-        }
-
-        function clearAllData() {
-            alert('Data management is now handled through Firebase. Contact support to delete account data.');
-        }
-
-        function exportData() {
-            alert('Export feature will be available soon with Firebase sync.');
-        }
-
-        function viewHistory() {
-            alert('History view will be available soon with Firebase sync.');
-        }a');
-            a.href = url;
-            a.download = `expenses-export-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function viewHistory() {
-            const archived = JSON.parse(localStorage.getItem('expense-archive') || '[]');
-            if (archived.length === 0) {
-                alert('No historical data available yet.');
-                return;
-            }
-            
-            // Group by month
-            const monthlyTotals = {};
-            archived.forEach(expense => {
-                const date = new Date(expense.date);
-                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-                const monthName = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
-                
-                if (!monthlyTotals[monthKey]) {
-                    monthlyTotals[monthKey] = { name: monthName, total: 0, categories: {} };
-                }
-                
-                monthlyTotals[monthKey].total += expense.amount;
-                
-                if (!monthlyTotals[monthKey].categories[expense.category]) {
-                    monthlyTotals[monthKey].categories[expense.category] = 0;
-                }
-                monthlyTotals[monthKey].categories[expense.category] += expense.amount;
-            });
-            
-            let historyText = 'Expense History:\n\n';
-            Object.values(monthlyTotals).forEach(month => {
-                historyText += `${month.name}: ${month.total.toFixed(2)}\n`;
-                Object.entries(month.categories).forEach(([cat, amount]) => {
-                    const categoryName = categories.find(c => c.id === cat)?.name || cat;
-                    historyText += `  ${categoryName}: ${amount.toFixed(2)}\n`;
-                });
-                historyText += '\n';
-            });
-            
-            alert(historyText);
-        }
-
-        function clearAllData() {
-            if (confirm('This will delete ALL expense data. Are you sure?')) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('expense-users', JSON.stringify(users));
-            localStorage.setItem('expense-categories', JSON.stringify(categories));
-            localStorage.setItem('expense-data', JSON.stringify(expenses));
-        }
-
-        // Initialize app when page loads
-        init();
-
-        // Close modals when clicking outside
-        document.getElementById('amount-modal').addEventListener('click', function(e) {
-            if (e.target === this) cancelEntry();
-        });
-
-        document.getElementById('settings-modal').addEventListener('click', function(e) {
-            if (e.target === this) hideSettings();
-        });
-
-        document.getElementById('edit-modal').addEventListener('click', function(e) {
-            if (e.target === this) cancelEdit();
-        });
     </script>
 </body>
 </html>
